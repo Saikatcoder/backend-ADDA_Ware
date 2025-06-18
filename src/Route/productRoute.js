@@ -13,6 +13,6 @@ productRoute.post('/add-product',
     addProduct);
 productRoute.post('/remove-product',removeProduct);
 productRoute.post('/single-product',singleProduct);
-productRoute.get('list-product',listProduct)
+productRoute.get('/list-product',listProduct)
 
 export default productRoute;

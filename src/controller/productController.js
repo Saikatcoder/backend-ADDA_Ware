@@ -1,8 +1,8 @@
 import { v2 as cloudinary } from "cloudinary";
+import productModel from "../models/productModel.js";
 
 
 // add product
-
 export const addProduct = async (req, res)=>{
     try {
         const {name, description, price , category, subcategory, size, bestSeller}= req.body;
@@ -38,10 +38,14 @@ imagesUrl = imagesUrl.filter((url) => url !== null);
         price:Number(price),
         subcategory,
         bestSeller:bestSeller === "true" ? true : false,
-        size:JSON.parse(size)
+        size:JSON.parse(size),
+        image:imagesUrl,
+        date:Date.now()
       }
-        
-        res.json({})
+      const product = new productModel(productData);
+      await product.save()
+    res.json({success:true,message:'product Added'})
+
     } catch (error) {
         console.log(error);
         
@@ -50,13 +54,91 @@ imagesUrl = imagesUrl.filter((url) => url !== null);
 
 // list product
 export const listProduct = async (req, res)=>{
+    try {
+        const products = await productModel.find({})
+        res.json({success:true, products})
 
+    } catch (error) {
+        res.status(500).json({
+            success:false,
+            message:"product not listed"
+        })
+    }
 }
 
-export const removeProduct = async(req, res)=>{
+// remove product 
+export const removeProduct = async (req, res) => {
+  try {
+    const { id } = req.body;
 
-}
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
 
-export const singleProduct = async (req, res)=>{
+    const product = await productModel.findByIdAndDelete(id);
 
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product removed successfully",
+    });
+  } catch (error) {
+    console.error("Error removing product:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Something went wrong. Please try again later.",
+    });
+  }
+};
+
+
+export const singleProduct = async (req, res) => {
+  try {
+    const { productId } = req.body;
+
+    // Validate if productId is provided
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+    }
+
+    // Check if valid MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
+    const product = await productModel.findById(productId);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      product,
+    });
+  } catch (error) {
+    console.error("Error fetching product:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
 }
